@@ -37,9 +37,13 @@ class TaskToolGUI:
         # Left side: Input fields
         input_frame = ttk.Frame(self.page1)
         input_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-
+        today = datetime.now().date()
+        days_until_thursday = (3 - today.weekday()) % 7
+        thursday = today + timedelta(days=days_until_thursday)
+        
         ttk.Label(input_frame, text="Settlement Date:").grid(row=0, column=0, sticky="w", pady=5)
-        self.date_entry = DateEntry(input_frame, width=12, background='darkblue', foreground='white', borderwidth=2)
+        self.date_entry = DateEntry(input_frame, width=12, background='darkblue', foreground='white', borderwidth=2, date_pattern='yyyy-mm-dd')
+        self.date_entry.set_date(thursday)
         self.date_entry.grid(row=0, column=1, sticky="w", pady=5)
 
         ttk.Label(input_frame, text="Name:").grid(row=1, column=0, sticky="w", pady=5)
@@ -122,25 +126,26 @@ class TaskToolGUI:
         c = conn.cursor()
         
         today = datetime.now().date()
-        start_of_week = today - timedelta(days=today.weekday())
-        end_of_week = start_of_week + timedelta(days=6)
+        days_until_thursday = (3 - today.weekday()) % 7
+        thursday = today + timedelta(days=days_until_thursday)
         
-        c.execute("SELECT date, name, task, score FROM tasks WHERE date BETWEEN ? AND ?", 
-                  (start_of_week.strftime('%Y-%m-%d'), end_of_week.strftime('%Y-%m-%d')))
+        c.execute("SELECT date, name, task, score FROM tasks WHERE date = ?", 
+                (thursday.strftime('%Y-%m-%d'),))
         for row in c.fetchall():
             self.weekly_view.insert("", "end", values=row)
         conn.close()
+
 
     def check_weekly_scores(self):
         conn = sqlite3.connect('tasks.db')
         c = conn.cursor()
         
         today = datetime.now().date()
-        start_of_week = today - timedelta(days=today.weekday())
-        end_of_week = start_of_week + timedelta(days=6)
+        days_until_thursday = (3 - today.weekday()) % 7
+        thursday = today + timedelta(days=days_until_thursday)
         
-        c.execute("SELECT name, SUM(score) FROM tasks WHERE date BETWEEN ? AND ? GROUP BY name", 
-                  (start_of_week.strftime('%Y-%m-%d'), end_of_week.strftime('%Y-%m-%d')))
+        c.execute("SELECT name, SUM(score) FROM tasks WHERE date = ? GROUP BY name", 
+                (thursday.strftime('%Y-%m-%d'),))
         results = c.fetchall()
         conn.close()
 
@@ -150,14 +155,21 @@ class TaskToolGUI:
         for name, score in results:
             ttk.Label(result_window, text=f"{name}: {score}").pack()
 
-    
+        
     def export_to_excel(self):
         conn = sqlite3.connect('tasks.db')
+        
+        today = datetime.now().date()
+        days_until_thursday = (3 - today.weekday()) % 7
+        thursday = today + timedelta(days=days_until_thursday)
+        
         query = """SELECT date, task, name, 
                 "陳煜騰分數", "黃發源分數", "許勝傑分數", "張宏宇分數", "謝禎維分數", 
                 YYYYMM, YYYY 
-                FROM WEEKTASK_REPORT"""
-        df = pd.read_sql_query(query, conn)
+                FROM WEEKTASK_REPORT
+                WHERE date = ?"""
+        
+        df = pd.read_sql_query(query, conn, params=(thursday.strftime('%Y-%m-%d'),))
         conn.close()
 
         excel_path = "D:/task-tool-with-python/tasks_export.xlsx"
@@ -188,7 +200,6 @@ class TaskToolGUI:
 
         workbook.save(excel_path)
         tk.messagebox.showinfo("Export Successful", f"Data has been appended to {sheet_name} sheet in tasks_export.xlsx")
-
 
 if __name__ == "__main__":
     root = tk.Tk()
