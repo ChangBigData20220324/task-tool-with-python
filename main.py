@@ -6,6 +6,8 @@ import sqlite3
 from datetime import datetime, timedelta
 import pytz
 import pandas as pd
+import openpyxl
+from openpyxl.utils.dataframe import dataframe_to_rows
 
 class TaskToolGUI:
     def __init__(self, master):
@@ -73,18 +75,26 @@ class TaskToolGUI:
         ttk.Button(self.page2, text="Check Weekly Scores", command=self.check_weekly_scores).pack(pady=10)
         ttk.Button(self.page2, text="Export to Excel", command=self.export_to_excel).pack(pady=10)
 
+
     def init_db(self):
         conn = sqlite3.connect('tasks.db')
         c = conn.cursor()
-        c.execute('''CREATE TABLE IF NOT EXISTS tasks
-                    (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    date text,
-                    name text,                  
-                    task text,
-                    score integer,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
+        # ... existing code ...
+
+        c.execute('''CREATE VIEW IF NOT EXISTS WEEKTASK_REPORT AS 
+                    SELECT date, task, name,
+                    CASE WHEN name = '陳煜騰' THEN score ELSE 0 END '陳煜騰分數',
+                    CASE WHEN name = '黃發源' THEN score ELSE 0 END '黃發源分數',
+                    CASE WHEN name = '許勝傑' THEN score ELSE 0 END '許勝傑分數',
+                    CASE WHEN name = '張宏宇' THEN score ELSE 0 END '張宏宇分數',
+                    CASE WHEN name = '謝禎維' THEN score ELSE 0 END '謝禎維分數',
+                    strftime('%Y%m', date) YYYYMM,
+                    strftime('%Y', date) YYYY
+                    FROM tasks''')
+
         conn.commit()
         conn.close()
+
 
     def add_task(self):
         local_tz = pytz.timezone('Asia/Taipei')
@@ -140,14 +150,45 @@ class TaskToolGUI:
         for name, score in results:
             ttk.Label(result_window, text=f"{name}: {score}").pack()
 
+    
     def export_to_excel(self):
         conn = sqlite3.connect('tasks.db')
-        df = pd.read_sql_query("SELECT * FROM tasks", conn)
+        query = """SELECT date, task, name, 
+                "陳煜騰分數", "黃發源分數", "許勝傑分數", "張宏宇分數", "謝禎維分數", 
+                YYYYMM, YYYY 
+                FROM WEEKTASK_REPORT"""
+        df = pd.read_sql_query(query, conn)
         conn.close()
 
-        # Export to Excel
-        df.to_excel("tasks_export.xlsx", index=False)
-        tk.messagebox.showinfo("Export Successful", "Data has been exported to tasks_export.xlsx")
+        excel_path = "D:/task-tool-with-python/tasks_export.xlsx"
+        sheet_name = "X"
+
+        try:
+            workbook = openpyxl.load_workbook(excel_path)
+        except FileNotFoundError:
+            workbook = openpyxl.Workbook()
+
+        if sheet_name in workbook.sheetnames:
+            sheet = workbook[sheet_name]
+            last_row = sheet.max_row
+        else:
+            sheet = workbook.create_sheet(sheet_name)
+            last_row = 0
+
+        # Write header if sheet is empty
+        if last_row == 0:
+            for col, header in enumerate(df.columns, start=1):
+                sheet.cell(row=1, column=col, value=header)
+            last_row = 1
+
+        # Append new data
+        for row, data in enumerate(df.values, start=last_row + 1):
+            for col, value in enumerate(data, start=1):
+                sheet.cell(row=row, column=col, value=value)
+
+        workbook.save(excel_path)
+        tk.messagebox.showinfo("Export Successful", f"Data has been appended to {sheet_name} sheet in tasks_export.xlsx")
+
 
 if __name__ == "__main__":
     root = tk.Tk()
