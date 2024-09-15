@@ -87,11 +87,9 @@ class TaskToolGUI:
 
         c.execute('''CREATE VIEW IF NOT EXISTS WEEKTASK_REPORT AS 
                     SELECT date, task, name,
-                    CASE WHEN name = '陳煜騰' THEN score ELSE 0 END '陳煜騰分數',
-                    CASE WHEN name = '黃發源' THEN score ELSE 0 END '黃發源分數',
-                    CASE WHEN name = '許勝傑' THEN score ELSE 0 END '許勝傑分數',
-                    CASE WHEN name = '張宏宇' THEN score ELSE 0 END '張宏宇分數',
-                    CASE WHEN name = '謝禎維' THEN score ELSE 0 END '謝禎維分數',
+                    CASE WHEN name = 'A' THEN score ELSE 0 END 'A分數',
+                    CASE WHEN name = 'B' THEN score ELSE 0 END 'B分數',
+                    CASE WHEN name = 'C' THEN score ELSE 0 END 'C分數',
                     strftime('%Y%m', date) YYYYMM,
                     strftime('%Y', date) YYYY
                     FROM tasks''')
@@ -163,16 +161,11 @@ class TaskToolGUI:
         days_until_thursday = (3 - today.weekday()) % 7
         thursday = today + timedelta(days=days_until_thursday)
         
-        query = """SELECT date, task, name, 
-                "陳煜騰分數", "黃發源分數", "許勝傑分數", "張宏宇分數", "謝禎維分數", 
-                YYYYMM, YYYY 
-                FROM WEEKTASK_REPORT
-                WHERE date = ?"""
-        
+        query = """SELECT date, task, name, A分數, B分數, C分數, YYYYMM, YYYY FROM WEEKTASK_REPORT WHERE date = ?"""
         df = pd.read_sql_query(query, conn, params=(thursday.strftime('%Y-%m-%d'),))
         conn.close()
 
-        excel_path = "D:/task-tool-with-python/tasks_export.xlsx"
+        excel_path = "tasks_export.xlsx"
         sheet_name = "X"
 
         try:
