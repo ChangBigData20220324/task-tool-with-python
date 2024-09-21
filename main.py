@@ -21,8 +21,7 @@ class TaskToolGUI:
 
         self.setup_main_frame()
 
-        # Initialize database
-        self.init_db()
+     
 
     def setup_main_frame(self):
         # Left side: Input fields
@@ -66,22 +65,6 @@ class TaskToolGUI:
 
         ttk.Button(weekly_frame, text="Refresh Weekly View", command=self.update_weekly_view).pack(pady=10)
 
-    def init_db(self):
-        conn = sqlite3.connect('tasks.db')
-        c = conn.cursor()
-        # ... existing code ...
-
-        # c.execute('''CREATE VIEW IF NOT EXISTS WEEKTASK_REPORT AS 
-        #             SELECT date, task, name,
-        #             CASE WHEN name = 'A' THEN score ELSE 0 END 'A分數',
-        #             CASE WHEN name = 'B' THEN score ELSE 0 END 'B分數',
-        #             CASE WHEN name = 'C' THEN score ELSE 0 END 'C分數',
-        #             strftime('%Y%m', date) YYYYMM,
-        #             strftime('%Y', date) YYYY
-        #             FROM tasks''')
-
-        conn.commit()
-        conn.close()
     def get_user_id(self, name):
         conn = sqlite3.connect('tasks.db')
         c = conn.cursor()
