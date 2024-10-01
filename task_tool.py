@@ -42,7 +42,7 @@ class TaskToolGUI:
 
         ttk.Label(input_frame, text="Score:").grid(row=3, column=0, sticky="w", pady=5)
         self.score_entry = ttk.Entry(input_frame)
-        self.score_entry.insert(0, "1")  # Set default value to "1"
+        # self.score_entry.insert(0, "1")  # Set default value to "1"
         self.score_entry.grid(row=3, column=1, sticky="we", pady=5)
 
         ttk.Button(input_frame, text="Add Task", command=self.add_task).grid(row=4, column=0, columnspan=2, pady=10)
