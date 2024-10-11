@@ -10,3 +10,6 @@ learning sqlite connect python and build a project
 2. key or import txt data
 3. export sqlite data to excel worksheet
 4. let code can run in any environment using .exe file
+
+
+> test icon
